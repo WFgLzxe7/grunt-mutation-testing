@@ -26,7 +26,15 @@ exports.init = function(grunt, opts) {
             // Find which files are used in the unit test such that they can be copied
             CopyUtils.copyToTemp(opts.code.concat(opts.specs), 'mutation-testing').done(function(tempDirPath) {
                 logger.trace('Copied %j to %s', opts.code.concat(opts.specs), tempDirPath);
-                // logger.trace('Copied production code to tmp');
+
+                // create symlinks in tmpDirPath, if set
+                if (opts.symlinks) {
+                    opts.symlinks.forEach(function(folder) {
+                        var srcPath = path.resolve(path.join(opts.basePath, folder));
+                        var tgtPath = path.join(tempDirPath, folder);
+                        fs.symlinkSync(srcPath, tgtPath);
+                    })
+                };
 
                 // Set the basePath relative to the temp dir
                 opts.basePath = path.join(tempDirPath, opts.basePath);
@@ -35,13 +43,18 @@ exports.init = function(grunt, opts) {
                     return path.join(tempDirPath, file);
                 });
 
+                // Overwrite the 'mutate' option with the commandline one, if given
+                var commandLineOptMutate = grunt.option("mutationTest:options:mutate");
+                if(commandLineOptMutate){
+                    commandLineOptMutate = grunt.file.expand(commandLineOptMutate);
+                    opts.mutate = commandLineOptMutate;
+                };
+
                 // Set the paths to the files to be mutated relative to the temp dir
                 opts.mutate = _.map(opts.mutate, function(file) {
                     return path.join(tempDirPath, file);
                 });
 
-                fs.symlinkSync('/home/skoblins/workspace/nodeoam/node_modules', path.join(tempDirPath, 'node_modules'));
-                // fs.symlinkSync('/home/skoblins/workspace/nodeoam/src/pki', path.join(tempDirPath, 'src/pki'));
 
                 doneBefore();
             });
