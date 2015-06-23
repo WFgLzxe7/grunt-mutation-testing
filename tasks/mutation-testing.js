@@ -20,6 +20,7 @@ var _ = require('lodash'),
 var Mutator = require('../lib/Mutator'),
     mutationTestingKarma = require('./mutation-testing-karma'),
     mutationTestingMocha = require('./mutation-testing-mocha'),
+    mutationTestingNodeUnit = require('./mutation-testing-nodeunit'),
     OptionUtils = require('../utils/OptionUtils'),
     TestStatus = require('../lib/TestStatus'),
     IOUtils = require('../utils/IOUtils'),
@@ -331,6 +332,7 @@ module.exports = function (grunt) {
         var opts = OptionUtils.getOptions(grunt, this);
         mutationTestingKarma.init(grunt, opts);
         mutationTestingMocha.init(grunt, opts);
+        mutationTestingNodeUnit.init(grunt, opts);
         mutationTest(grunt, this, opts);
     });
 };
