@@ -13,6 +13,7 @@ var CopyUtils = require('../utils/CopyUtils'),
 Promise.longStackTraces();
 var cp = require("child_process");
 var fs = Promise.promisifyAll(require("fs"));
+var fsExtra = require('fs-extra');
 var E = require("core-error-predicates");
 var rimrafAsync = Promise.promisify(require("rimraf"));
 
@@ -65,6 +66,8 @@ exports.init = function(grunt, opts) {
     var commandLineOptMutate = grunt.option("mutationTest:options:mutate");
     var commandLineOptCode = grunt.option("mutationTest:options:code");
     var commandLineOptCodeAdditional = grunt.option("mutationTest:options:code:additional");
+    var originalBasePath = process.cwd();
+    var tmpBasePath;
 
     if(commandLineOptMutate){
         opts.mutate = grunt.file.expand(commandLineOptMutate);
@@ -96,10 +99,10 @@ exports.init = function(grunt, opts) {
 
     var expandedSpecs = expandSpecs();
 
-    function runTests(specs){
+    function runTests(specs, tmpDir){
         return specs.each(function(file) {
             var name = path.basename(file).replace(path.extname(file), "");
-            var p = path.join(process.cwd(), file);
+            var p = path.join(tmpDir, file);
             // var p = file;
             // logger.error(p);
             return runAsync("nodeunit --reporter minimal " + p);
@@ -113,6 +116,7 @@ exports.init = function(grunt, opts) {
             // Find which files are used in the unit test such that they can be copied
             CopyUtils.copyToTemp(opts.code.concat(opts.specs), 'mutation-testing')
             .done(function(tempDirPath) {
+                tmpBasePath = tempDirPath;
                 logger.trace('Copied %j to %s', opts.code.concat(opts.specs), tempDirPath);
 
                 // create symlinks in tmpDirPath, if set
@@ -133,9 +137,7 @@ exports.init = function(grunt, opts) {
                     return path.join(tempDirPath, file);
                 });
 
-                process.chdir(tempDirPath);
-
-                runTests(expandedSpecs).then(function(){
+                runTests(expandedSpecs, tempDirPath).then(function(){
                     doneBefore();
                 })
                 .catch(function(error) {
@@ -147,11 +149,25 @@ exports.init = function(grunt, opts) {
     };
 
     opts.test = function(done) {
-        runTests(expandedSpecs).then(function(){
+        runTests(expandedSpecs, tmpBasePath).then(function(){
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
+            // logger.error(error.stdout);
             done(TestStatus.KILLED);
         });
-    }
+    };
+
+    opts.after = function() {
+        var srcPath = path.join(tmpBasePath, 'reports');
+        var tgtPath = path.join(originalBasePath, 'reports');
+        fsExtra.copy(srcPath, tgtPath, function (err) {
+            if (err) {
+                logger.error(err);
+            } else {
+                logger.info('Copied ' + srcPath + ' to ' + tgtPath);
+            }
+        })
+        logger.info('Copied ' + srcPath + ' to ' + tgtPath);
+    };
 }
