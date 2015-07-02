@@ -151,7 +151,6 @@ exports.init = function(grunt, opts) {
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
-            logger.error(error);
             done(TestStatus.KILLED);
         });
     }
