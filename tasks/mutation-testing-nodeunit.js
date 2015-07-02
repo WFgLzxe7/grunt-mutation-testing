@@ -157,17 +157,4 @@ exports.init = function(grunt, opts) {
             done(TestStatus.KILLED);
         });
     };
-
-    opts.after = function() {
-        var srcPath = path.join(tmpBasePath, 'reports');
-        var tgtPath = path.join(originalBasePath, 'reports');
-        fsExtra.copy(srcPath, tgtPath, function (err) {
-            if (err) {
-                logger.error(err);
-            } else {
-                logger.info('Copied ' + srcPath + ' to ' + tgtPath);
-            }
-        })
-        logger.info('Copied ' + srcPath + ' to ' + tgtPath);
-    };
 }
