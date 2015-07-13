@@ -125,7 +125,7 @@ exports.init = function(grunt, opts) {
                         var srcPath = path.resolve(path.join(opts.basePath, folder));
                         var tgtPath = path.join(tempDirPath, folder);
                         fs.symlinkSync(srcPath, tgtPath);
-                        logger.info('Created symbolik link: %s -> %s', srcPath, tgtPath);
+                        logger.info('Created symbolic link: %s -> %s', srcPath, tgtPath);
                     })
                 };
 
