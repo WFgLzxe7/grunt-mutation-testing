@@ -66,6 +66,7 @@ exports.init = function(grunt, opts) {
     var commandLineOptMutate = grunt.option("mutationTest:options:mutate");
     var commandLineOptCode = grunt.option("mutationTest:options:code");
     var commandLineOptCodeAdditional = grunt.option("mutationTest:options:code:additional");
+    var commandLineOptCodeExcl = grunt.option("mutationTest:options:excludeMutations");
     var originalBasePath = process.cwd();
     var tmpBasePath;
 
@@ -77,6 +78,11 @@ exports.init = function(grunt, opts) {
     if(commandLineOptCode){
         opts.code = grunt.file.expand(commandLineOptCode);
         logger.info('Overriding opts.code with %s', opts.code);
+    };
+
+    if(commandLineOptCodeExcl){
+        opts.excludeMutations = JSON.parse(commandLineOptCodeExcl);
+        logger.info('Overriding opts.excludeMutations with %s', commandLineOptCodeExcl);
     };
 
     if(commandLineOptCodeAdditional){
