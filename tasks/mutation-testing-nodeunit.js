@@ -14,10 +14,10 @@ Promise.longStackTraces();
 var cp = require("child_process");
 var fs = Promise.promisifyAll(require("fs"));
 var fsExtra = require('fs-extra');
-var E = require("core-error-predicates");
-var rimrafAsync = Promise.promisify(require("rimraf"));
+// var E = require("core-error-predicates");
+// var rimrafAsync = Promise.promisify(require("rimraf"));
 
-function runAsync(execStr) {
+function runAsync(execStr, timeout) {
     return new Promise(function(resolve, reject) {
         var stdout = [];
         var stderr = [];
@@ -50,7 +50,8 @@ function runAsync(execStr) {
                 reject(error);
             }
         });
-    }).catch(function(e) {
+    }).timeout(timeout)
+    .catch(function(e) {
         e.command = execStr;
         throw e;
     });
@@ -68,6 +69,14 @@ exports.init = function(grunt, opts) {
     var commandLineOptCodeAdditional = grunt.option("mutationTest:options:code:additional");
     var commandLineOptCodeExcl = grunt.option("mutationTest:options:excludeMutations");
     var commandLineOptCodeSymlinks = grunt.option("mutationTest:options:symlinks");
+    var commandLineOptTimeout = grunt.option("mutationTest:options:timeout") || 20000;
+    var commandLineOptLogLevel = grunt.option("mutationTest:options:logLevel");
+
+    if(commandLineOptLogLevel){
+        opts.logLevel = commandLineOptLogLevel;
+        logger.info('Overriding opts.logLevel with %s', opts.logLevel);
+    };
+
     var originalBasePath = process.cwd();
     var tmpBasePath;
 
@@ -101,6 +110,9 @@ exports.init = function(grunt, opts) {
         logger.info('Overriding opts.code with %s', opts.code);
     };
 
+    logger.info('Setting timeout for each single test %dms', commandLineOptTimeout);
+
+
     function expandSpecs() {
         var specPattern = grunt.option("mutationTest:options:specs") || "test/**/*.js";
         var globResult = globAsync(specPattern);
@@ -115,9 +127,7 @@ exports.init = function(grunt, opts) {
         return specs.each(function(file) {
             var name = path.basename(file).replace(path.extname(file), "");
             var p = path.join(tmpDir, file);
-            // var p = file;
-            // logger.error(p);
-            return runAsync("nodeunit --reporter minimal " + p);
+            return runAsync("./node_modules/nodeunit/bin/nodeunit --reporter minimal " + p, commandLineOptTimeout);
         });
     }
 
@@ -153,7 +163,7 @@ exports.init = function(grunt, opts) {
                     doneBefore();
                 })
                 .catch(function(error) {
-                    logger.error('Tests don\'t pass without mutations!');
+                    logger.error(error + '. Tests don\'t pass without mutations!');
                     process.exit(-1);
                 });
             });
@@ -165,7 +175,6 @@ exports.init = function(grunt, opts) {
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
-            // logger.error(error.stdout);
             done(TestStatus.KILLED);
         });
     };
