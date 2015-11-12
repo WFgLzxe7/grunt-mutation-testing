@@ -1,26 +1,23 @@
-/**
- * mutation-testing-mocha
- */
 'use strict';
 
-var _ = require('lodash'),
-    log4js = require('log4js'),
-    Mocha = require('mocha'),
-    path = require('path');
-
 var CopyUtils = require('../utils/CopyUtils'),
+    path = require('path'),
+    _ = require('lodash'),
+    nodeunit = require('nodeunit'),
     TestStatus = require('../lib/TestStatus'),
+    log4js = require('log4js'),
+    logger = log4js.getLogger('mutation-testing-all'),
     Promise = require('bluebird'),
     globAsync = Promise.promisify(require("glob"));
 
-var logger = log4js.getLogger('mutation-testing-mocha');
 Promise.longStackTraces();
-
 var cp = require("child_process");
 var fs = Promise.promisifyAll(require("fs"));
+var fsExtra = require('fs-extra');
+// var E = require("core-error-predicates");
+// var rimrafAsync = Promise.promisify(require("rimraf"));
 
-
-function runAsync(execStr) {
+function runAsync(execStr, timeout) {
     return new Promise(function(resolve, reject) {
         var stdout = [];
         var stderr = [];
@@ -53,14 +50,17 @@ function runAsync(execStr) {
                 reject(error);
             }
         });
-    }).catch(function(e) {
+    }).timeout(timeout)
+    .catch(function(e) {
         e.command = execStr;
         throw e;
     });
 }
 
+
+
 exports.init = function(grunt, opts) {
-    if(opts.testFramework !== 'mocha') {
+    if(opts.testFramework === 'karma') {
         return;
     }
 
@@ -69,6 +69,14 @@ exports.init = function(grunt, opts) {
     var commandLineOptCodeAdditional = grunt.option("mutationTest:options:code:additional");
     var commandLineOptCodeExcl = grunt.option("mutationTest:options:excludeMutations");
     var commandLineOptCodeSymlinks = grunt.option("mutationTest:options:symlinks");
+    var commandLineOptTimeout = grunt.option("mutationTest:options:timeout") || 20000;
+    var commandLineOptLogLevel = grunt.option("mutationTest:options:logLevel");
+
+    if(commandLineOptLogLevel){
+        opts.logLevel = commandLineOptLogLevel;
+        logger.info('Overriding opts.logLevel with %s', opts.logLevel);
+    };
+
     var originalBasePath = process.cwd();
     var tmpBasePath;
 
@@ -102,6 +110,9 @@ exports.init = function(grunt, opts) {
         logger.info('Overriding opts.code with %s', opts.code);
     };
 
+    logger.info('Setting timeout for each single test %dms', commandLineOptTimeout);
+
+
     function expandSpecs() {
         var specPattern = grunt.option("mutationTest:options:specs") || "test/**/*.js";
         var globResult = globAsync(specPattern);
@@ -116,9 +127,11 @@ exports.init = function(grunt, opts) {
         return specs.each(function(file) {
             var name = path.basename(file).replace(path.extname(file), "");
             var p = path.join(tmpDir, file);
-            // var p = file;
-            // logger.error(p);
-            return runAsync("mocha -b " + p);
+            var command = "./node_modules/nodeunit/bin/nodeunit --reporter minimal "
+            if(p.search("Mocha.js") !== -1) {
+                command = "node_modules/@nokia/builder/node_modules/.bin/mocha -b ";
+            }
+            return runAsync(command + p, commandLineOptTimeout);
         });
     }
 
@@ -154,7 +167,7 @@ exports.init = function(grunt, opts) {
                     doneBefore();
                 })
                 .catch(function(error) {
-                    logger.error('Tests don\'t pass without mutations!');
+                    logger.error(error + '. Tests don\'t pass without mutations!');
                     process.exit(-1);
                 });
             });
@@ -162,13 +175,11 @@ exports.init = function(grunt, opts) {
     };
 
     opts.test = function(done) {
-        runTests(expandedSpecs, tmpBasePath)
-        .then(function(){
+        runTests(expandedSpecs, tmpBasePath).then(function(){
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
-            // logger.error(error.stdout);
             done(TestStatus.KILLED);
         });
     };
-};
+}

@@ -19,8 +19,7 @@ var _ = require('lodash'),
 
 var Mutator = require('../lib/Mutator'),
     mutationTestingKarma = require('./mutation-testing-karma'),
-    mutationTestingMocha = require('./mutation-testing-mocha'),
-    mutationTestingNodeUnit = require('./mutation-testing-nodeunit'),
+    mutationTestingAll = require('./mutation-testing-all'),
     OptionUtils = require('../utils/OptionUtils'),
     TestStatus = require('../lib/TestStatus'),
     IOUtils = require('../utils/IOUtils'),
@@ -331,8 +330,7 @@ module.exports = function (grunt) {
     grunt.registerMultiTask('mutationTest', 'Test your tests by mutating the code.', function() {
         var opts = OptionUtils.getOptions(grunt, this);
         mutationTestingKarma.init(grunt, opts);
-        mutationTestingMocha.init(grunt, opts);
-        mutationTestingNodeUnit.init(grunt, opts);
+        mutationTestingAll.init(grunt, opts);
         mutationTest(grunt, this, opts);
     });
 };
