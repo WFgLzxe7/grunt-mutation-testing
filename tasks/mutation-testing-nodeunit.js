@@ -127,7 +127,11 @@ exports.init = function(grunt, opts) {
         return specs.each(function(file) {
             var name = path.basename(file).replace(path.extname(file), "");
             var p = path.join(tmpDir, file);
-            return runAsync("./node_modules/nodeunit/bin/nodeunit --reporter minimal " + p, commandLineOptTimeout);
+            var command = "./node_modules/nodeunit/bin/nodeunit --reporter minimal "
+            if(p.parse().name.search("Mocha$") !== -1) {
+                command = "node_modules/@nokia/builder/node_modules/.bin/mocha -b ";
+            }
+            return runAsync(command + p, commandLineOptTimeout);
         });
     }
 
