@@ -8,7 +8,8 @@ var CopyUtils = require('../utils/CopyUtils'),
     log4js = require('log4js'),
     logger = log4js.getLogger('mutation-testing-all'),
     Promise = require('bluebird'),
-    globAsync = Promise.promisify(require("glob"));
+    glob = require("glob"),
+    globAsync = Promise.promisify(glob);
 
 Promise.longStackTraces();
 var cp = require("child_process");
@@ -102,8 +103,8 @@ exports.init = function(grunt, opts) {
 
     if(commandLineOptCodeAdditional){
         commandLineOptCodeAdditional = commandLineOptCodeAdditional.split(',');
-        commandLineOptCodeAdditional.forEach(function(minimaxExpr){
-            var expanded = grunt.file.expand(minimaxExpr);
+        commandLineOptCodeAdditional.forEach(function(minimatchExpr){
+            var expanded = grunt.file.expand(minimatchExpr);
             logger.info('Appending opts.code with %s', expanded);
             opts.code = opts.code.concat(expanded);
         })
@@ -115,9 +116,15 @@ exports.init = function(grunt, opts) {
 
     function expandSpecs() {
         var specPattern = grunt.option("mutationTest:options:specs") || "test/**/*.js";
-        var globResult = globAsync(specPattern);
+        specPattern = specPattern.split(',');
+        var globResult = [];
+        specPattern.forEach(function(minimatchExpr) {
+            var expanded = grunt.file.expand(minimatchExpr);
+            globResult = globResult.concat(expanded);
+        })
+
         return Promise
-            .join(globResult)
+            .join()
             .return(globResult);
     }
 
