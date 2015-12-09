@@ -15,10 +15,8 @@ Promise.longStackTraces();
 var cp = require("child_process");
 var fs = Promise.promisifyAll(require("fs"));
 var fsExtra = require('fs-extra');
-// var E = require("core-error-predicates");
-// var rimrafAsync = Promise.promisify(require("rimraf"));
 
-function runAsync(execStr, timeout) {
+function runAsync(execStr, timeout, tmpDir) {
     return new Promise(function(resolve, reject) {
         var stdout = [];
         var stderr = [];
@@ -26,7 +24,7 @@ function runAsync(execStr, timeout) {
         var command = elements.shift();
         var args = elements;
 
-        var newProcess = cp.spawn(command, args);
+        var newProcess = cp.spawn(command, args, {cwd: tmpDir});
         newProcess.stdout.on("data", function(buffer) {
             process.stdout.write(buffer);
             stdout.push(buffer);
@@ -132,13 +130,16 @@ exports.init = function(grunt, opts) {
 
     function runTests(specs, tmpDir){
         return specs.each(function(file) {
-            var name = path.basename(file).replace(path.extname(file), "");
+            // var name = path.basename(file).replace(path.extname(file), "");
             var p = path.join(tmpDir, file);
-            var command = "./node_modules/nodeunit/bin/nodeunit --reporter minimal "
-            if(p.search("Mocha.js") !== -1) {
-                command = "node_modules/@nokia/builder/node_modules/.bin/mocha -b ";
+            if(p.search("Mocha.js") === -1) {
+                var command = path.join(tmpDir, "node_modules", "nodeunit", "bin", "nodeunit") + " --reporter minimal "
             }
-            return runAsync(command + p, commandLineOptTimeout);
+            else {
+                command = path.join(tmpDir, "node_modules", "@nokia", "builder", "node_modules", ".bin", "mocha") + " -b ";
+            }
+
+            return runAsync(command + p, commandLineOptTimeout, tmpDir);
         });
     }
 
