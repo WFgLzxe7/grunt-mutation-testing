@@ -15,6 +15,7 @@ Promise.longStackTraces();
 var cp = require("child_process");
 var fs = Promise.promisifyAll(require("fs"));
 var fsExtra = require('fs-extra');
+var newProcess;
 
 function runAsync(execStr, timeout, tmpDir) {
     return new Promise(function(resolve, reject) {
@@ -24,7 +25,7 @@ function runAsync(execStr, timeout, tmpDir) {
         var command = elements.shift();
         var args = elements;
 
-        var newProcess = cp.spawn(command, args, {cwd: tmpDir});
+        newProcess = cp.spawn(command, args, {cwd: tmpDir});
         newProcess.stdout.on("data", function(buffer) {
             process.stdout.write(buffer);
             stdout.push(buffer);
