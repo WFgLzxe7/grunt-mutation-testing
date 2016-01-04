@@ -51,6 +51,7 @@ function runAsync(execStr, timeout, tmpDir) {
         });
     }).timeout(timeout)
     .catch(function(e) {
+        newProcess.kill("SIGKILL");
         e.command = execStr;
         throw e;
     });
