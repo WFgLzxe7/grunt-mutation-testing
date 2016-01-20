@@ -25,6 +25,7 @@ function runAsync(execStr, timeout, tmpDir) {
         var command = elements.shift();
         var args = elements;
 
+        logger.info("spawning command: " + command + ", args: " + args + ", cwd: " + tmpDir);
         newProcess = cp.spawn(command, args, {cwd: tmpDir});
         newProcess.stdout.on("data", function(buffer) {
             process.stdout.write(buffer);
