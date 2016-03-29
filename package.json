@@ -1,10 +1,10 @@
 {
   "name": "grunt-mutation-testing",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "JavaScript Mutation Testing as grunt plugin. Tests your tests by mutating the code.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jimivdw/grunt-mutation-testing"
+    "url": "git+https://github.com/jimivdw/grunt-mutation-testing.git"
   },
   "author": {
     "name": "Jimi van der Woning",
@@ -63,5 +63,23 @@
     "sync-exec": "~0.3.2",
     "temp": "^0.8.1",
     "xml2js": "^0.4.6"
-  }
+  },
+  "readmeFilename": "README.md",
+  "gitHead": "165cdde0df77605bff180e622408e846efe7560b",
+  "bugs": {
+    "url": "https://github.com/jimivdw/grunt-mutation-testing/issues"
+  },
+  "homepage": "https://github.com/jimivdw/grunt-mutation-testing#readme",
+  "_id": "grunt-mutation-testing@1.1.5",
+  "_shasum": "f6bf305d42ec065e42a8d2401478ea883ddcff37",
+  "_from": "grunt-mutation-testing@1.1.5",
+  "_npmVersion": "2.11.2",
+  "_nodeVersion": "0.12.6",
+  "_npmUser": {},
+  "dist": {
+    "shasum": "f6bf305d42ec065e42a8d2401478ea883ddcff37",
+    "tarball": "http://esmzv03.emea.nsn-net.net/grunt-mutation-testing/-/grunt-mutation-testing-1.1.5.tgz"
+  },
+  "_resolved": "http://esmzv03.emea.nsn-net.net/grunt-mutation-testing/-/grunt-mutation-testing-1.1.5.tgz",
+  "readme": "ERROR: No README data found!"
 }

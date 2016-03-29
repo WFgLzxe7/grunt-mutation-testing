@@ -133,7 +133,6 @@ exports.init = function(grunt, opts) {
 
     function runTests(specs, tmpDir){
         return specs.each(function(file) {
-            // var name = path.basename(file).replace(path.extname(file), "");
             var p = path.join(tmpDir, file);
             if(p.search("Mocha.js") === -1) {
                 var command = path.join(tmpDir, "node_modules", "nodeunit", "bin", "nodeunit") + " --reporter minimal "
@@ -148,7 +147,14 @@ exports.init = function(grunt, opts) {
 
     opts.before = function(doneBefore) {
         if(opts.mutateProductionCode) {
-            doneBefore();
+            tmpBasePath = originalBasePath;
+            runTests(expandedSpecs, originalBasePath)
+            .then(function(){
+                doneBefore();
+            }).catch(function(error) {
+                logger.error(error + '. Tests don\'t pass without mutations!');
+                process.exit(-1);
+            });
         } else {
             // Find which files are used in the unit test such that they can be copied
             CopyUtils.copyToTemp(opts.code.concat(opts.specs), 'mutation-testing')
