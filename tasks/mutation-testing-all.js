@@ -18,6 +18,8 @@ var fsExtra = require('fs-extra');
 var newProcess;
 
 function runAsync(execStr, timeout, tmpDir) {
+    execStr = execStr.replace(/,/g, ' ');
+
     return new Promise(function(resolve, reject) {
         var stdout = [];
         var stderr = [];
@@ -25,7 +27,7 @@ function runAsync(execStr, timeout, tmpDir) {
         var command = elements.shift();
         var args = elements;
 
-        logger.info("spawning command: " + command + ", args: " + args + ", cwd: " + tmpDir);
+        logger.info("spawning command: ", command, ", args: ", args, ", cwd: ", tmpDir);
         newProcess = cp.spawn(command, args, {cwd: tmpDir});
         newProcess.stdout.on("data", function(buffer) {
             process.stdout.write(buffer);
@@ -132,16 +134,31 @@ exports.init = function(grunt, opts) {
     var expandedSpecs = expandSpecs();
 
     function runTests(specs, tmpDir){
-        return specs.each(function(file) {
-            var p = path.join(tmpDir, file);
-            if(p.search("Mocha.js") === -1) {
-                var command = path.join(tmpDir, "node_modules", "nodeunit", "bin", "nodeunit") + " --reporter minimal "
+        var nodeunitSpecs = [];
+        var mochaSpecs = [];
+        return specs.each(function(spec) {
+            if (spec.search("Mocha.js") === -1) {
+                nodeunitSpecs.push(path.join(tmpDir, spec));
+            } else {
+                mochaSpecs.push(path.join(tmpDir, spec));
             }
-            else {
-                command = path.join(tmpDir, "node_modules", "@nokia", "builder", "node_modules", ".bin", "mocha") + " -b ";
+        }).then(function(){
+            var nodeunitCommand = path.join(tmpDir, "node_modules", ".bin", "nodeunit") + " --reporter minimal "
+            // var mochaCommand    = path.join(tmpDir, "node_modules", "@nokia", "builder", "node_modules", ".bin", "mocha") + " -b ";
+            var mochaCommand    = "mocha" + " -b ";
+            var commands = [];
+
+            if (nodeunitSpecs) {
+                commands.push(runAsync(nodeunitCommand + nodeunitSpecs, commandLineOptTimeout, tmpDir));
             }
 
-            return runAsync(command + p, commandLineOptTimeout, tmpDir);
+            if (mochaSpecs) {
+                commands.push(runAsync(mochaCommand + mochaSpecs, commandLineOptTimeout, tmpDir));
+            }
+            return commands;
+        }).catch(function(err) {
+            process.exit(-1);
+            // throw err;
         });
     }
 
@@ -149,7 +166,7 @@ exports.init = function(grunt, opts) {
         if(opts.mutateProductionCode) {
             tmpBasePath = originalBasePath;
             runTests(expandedSpecs, originalBasePath)
-            .then(function(){
+            .each(function(){
                 doneBefore();
             }).catch(function(error) {
                 logger.error(error + '. Tests don\'t pass without mutations!');
@@ -192,7 +209,7 @@ exports.init = function(grunt, opts) {
     };
 
     opts.test = function(done) {
-        runTests(expandedSpecs, tmpBasePath).then(function(){
+        runTests(expandedSpecs, tmpBasePath).each(function(){
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
