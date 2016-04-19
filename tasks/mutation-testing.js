@@ -110,9 +110,8 @@ function truncateReplacement(opts, replacementArg) {
 }
 
 function createMutationFileMessage(opts, srcFile) {
-    var normalizedBasePath = IOUtils.normalizeWindowsPath(opts.basePath),
-        normalizedSrcFile = IOUtils.normalizeWindowsPath(srcFile);
-    return _.last(normalizedSrcFile.split(normalizedBasePath));
+    var normalizedSrcFile = path.relative(process.cwd(), srcFile);
+    return normalizedSrcFile;
 }
 
 function createMutationLogMessage(opts, srcFilePath, mutation, src, testStatus) {
@@ -189,7 +188,7 @@ function mutationTestFile(srcFilename, runTests, logMutation, opts) {
             }
             fs.writeFileSync(srcFilename, mutator.applyMutation(mutation));
             return runTests().then(function (testStatus) {
-				var mutationResult = createMutationLogMessage(opts, srcFilename, mutation, src, testStatus);
+                var mutationResult = createMutationLogMessage(opts, srcFilename, mutation, src, testStatus);
                 fileMutationResult.mutationResults.push(mutationResult);
                 if (testStatus === TestStatus.SURVIVED) {
                     stats.survived += 1;
@@ -233,7 +232,7 @@ function mutationTest(grunt, task, opts) {
     }
 
     function createMutationHtmlReport(results) {
-        if(opts.reporters.html) {
+        if(opts.reporters.html) {;
             reportGenerator.generate(opts.reporters.html, results);
         }
     }
