@@ -148,11 +148,11 @@ exports.init = function(grunt, opts) {
             // var mochaCommand    = "mocha" + " -b ";
             var commands = [];
 
-            if (nodeunitSpecs) {
+            if (nodeunitSpecs && nodeunitSpecs.length) {
                 commands.push(runAsync(nodeunitCommand + nodeunitSpecs, commandLineOptTimeout, tmpDir));
             }
 
-            if (mochaSpecs) {
+            if (mochaSpecs && mochaSpecs.length) {
                 commands.push(runAsync(mochaCommand + mochaSpecs, commandLineOptTimeout, tmpDir));
             }
             return commands;
