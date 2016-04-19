@@ -144,8 +144,8 @@ exports.init = function(grunt, opts) {
             }
         }).then(function(){
             var nodeunitCommand = path.join(tmpDir, "node_modules", ".bin", "nodeunit") + " --reporter minimal "
-            // var mochaCommand    = path.join(tmpDir, "node_modules", "@nokia", "builder", "node_modules", ".bin", "mocha") + " -b ";
-            var mochaCommand    = "mocha" + " -b ";
+            var mochaCommand    = path.join(tmpDir, "node_modules", "@nokia", "builder", "node_modules", ".bin", "mocha") + " -b ";
+            // var mochaCommand    = "mocha" + " -b ";
             var commands = [];
 
             if (nodeunitSpecs) {
@@ -165,8 +165,8 @@ exports.init = function(grunt, opts) {
     opts.before = function(doneBefore) {
         if(opts.mutateProductionCode) {
             tmpBasePath = originalBasePath;
-            runTests(expandedSpecs, originalBasePath)
-            .each(function(){
+            Promise.all(runTests(expandedSpecs, originalBasePath))
+            .then(function(){
                 doneBefore();
             }).catch(function(error) {
                 logger.error(error + '. Tests don\'t pass without mutations!');
@@ -197,7 +197,7 @@ exports.init = function(grunt, opts) {
                     return path.join(tempDirPath, file);
                 });
 
-                runTests(expandedSpecs, tempDirPath).then(function(){
+                Promise.all(runTests(expandedSpecs, tempDirPath)).then(function(){
                     doneBefore();
                 })
                 .catch(function(error) {
@@ -209,7 +209,8 @@ exports.init = function(grunt, opts) {
     };
 
     opts.test = function(done) {
-        runTests(expandedSpecs, tmpBasePath).each(function(){
+        Promise.all(runTests(expandedSpecs, tmpBasePath))
+        .then(function() {
             done(TestStatus.SURVIVED);
         })
         .catch(function(error) {
